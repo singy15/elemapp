@@ -1,0 +1,1390 @@
+{
+  "systemName": "testmana",
+  "dataType": {
+    "number": {},
+    "text": {},
+    "datetime": {}
+  },
+  "ioType": {
+    "$name": "入出力タイプ",
+    "db": {
+      "$name": "データベース",
+      "query": {},
+      "command": {}
+    },
+    "model": {},
+    "file": {}
+  },
+  "layoutType": {
+    "$name": "レイアウトタイプ",
+    "RECTANGLE": {},
+    "LINE": {}
+  },
+  "domainType": {
+    "id": {
+      "$name": "基本ID型",
+      "dbType": "bigint",
+      "type": "long",
+      "ddlOption": "autoincrement",
+      "desc": "標準のID型"
+    },
+    "stockCd": {
+      "name": "在庫CD",
+      "type": "string",
+      "maxLength": 12,
+      "minLength": 12,
+      "desc": "YYYYMMDDNNNN\nNNNNは連番",
+      "dbType": "varchar(12)"
+    },
+    "itemCd": {
+      "name": "品目CD",
+      "type": "string",
+      "maxLength": 8,
+      "minLength": 8,
+      "desc": "NNNNNNNN",
+      "dbType": "varchar(8)"
+    },
+    "longName": {
+      "name": "名称",
+      "type": "string",
+      "dbType": "varchar(max)"
+    },
+    "stockQty": {
+      "name": "在庫数量",
+      "type": "long",
+      "min": 0,
+      "max": 999999999,
+      "dbType": "numeric(9)"
+    },
+    "qty": {
+      "name": "数量",
+      "type": "long",
+      "min": -999999999,
+      "max": 999999999,
+      "dbType": "numeric(9)"
+    },
+    "placeCd": {
+      "name": "場所CD",
+      "type": "long",
+      "maxLength": 6,
+      "minLength": 6,
+      "desc": "XXYYYY\n拠点(XX)+場所(YYYY)",
+      "dbType": "varchar(6)"
+    }
+  },
+  "viewComponentType": {
+    "form": {
+      "$name": "画面",
+      "template": "`\n<div style=\"background-color:#EFEFEF; font-size:11px; font-family:unset; border:solid 1px ${this.baseColor || type.baseColor}; border-radius:5px; box-sizing:border-box; width:100%; height:100%;\">\n  <div style=\"top:0px; height:30px; box-sizing:border-box; background-color:${this.baseColor || type.baseColor}; display:flex; justify-content:start; align-items:center; padding-left:5px; color:#fff;\">\n  ${(this.label)? this.label : ''}\n  </div>\n  <contents>\n  </contents>\n</div>\n`",
+      "baseColor": " #7272c7"
+    },
+    "button": {
+      "$name": "ボタン",
+      "template": "`<button style=\"width:100%; height:100%; box-sizing:border-box; background-color:#fff; border:solid 1px #888; border-radius:5px; font-size:11px; font-family:unset; cursor:pointer; ${(this.style)? this.style : ''}\" ${(this.click)? '@click=\"' + this.click + '\"' : ''} ${(this.event)? Object.keys(this.event).map(k => `@${k}=\"${this.event[k]}\"`).join(\" \") : ''} ${(this.bind)? Object.keys(this.bind).map(k => `:${k}=\"${this.bind[k]}\"`).join(\" \") : ''}>${this.label}</button>`"
+    },
+    "label": {
+      "$name": "ラベル",
+      "template": "`<span style=\"display:flex; box-sizing:border-box; justify-content:${(this.textAlign)? this.textAlign : 'center'}; align-items:center; width:100%; height:100%; border:solid 1px #CCC; ${(this.style)? this.style : ''} \" ${(this.event)? Object.keys(this.event).map(k => `@${k}=\"${this.event[k]}\"`).join(\" \") : ''} ${(this.bind)? Object.keys(this.bind).map(k => `:${k}=\"${this.bind[k]}\"`).join(\" \") : ''} ${(this.html)? 'v-html=\"'+this.html+'\"' : ''}>${(this.label)? this.label : ''}</span>`"
+    },
+    "radio": {
+      "$name": "ラジオボタン",
+      "template": "`<input type=\"radio\" style=\"box-sizing:border-box;\" ${(this.value)? ':value=\"' + this.value + '\"' : ''} ${(this.model)? 'v-model=\"' + this.model + '\"' : ''} />`"
+    },
+    "text": {
+      "template": "`<input type=\"text\" style=\"width:100%; height:100%; font-family:unset; font-size:11px; border:solid 1px #888; box-sizing:border-box; outline:none; \" ${(this.model)? 'v-model=\"'+this.model+'\"' : ''} ${(this.value)? ':value=\"'+this.value+'\"' : ''} ${(this.readonly)? 'readonly' : ''} ${(this.event)? Object.keys(this.event).map(k => `@${k}=\"${this.event[k]}\"`).join(\" \") : ''} ${(this.bind)? Object.keys(this.bind).map(k => `:${k}=\"${this.bind[k]}\"`).join(\" \") : ''} spellcheck=\"false\" />`",
+      "$name": "テキストボックス"
+    },
+    "date": {
+      "$name": "日付",
+      "template": "`<input type=\"date\" style=\"width:100%; height:100%; box-sizing:border-box;\" value=\"${(this.label)? this.label : ''}\" />`"
+    },
+    "container": {
+      "template": "`<div style=\"width:100%; height:100%; background-color:#fff; border:solid 1px #888; border-radius:5px; box-sizing:border-box; ${(this.style)? this.style : ''}\" ${(this.vue)? Object.keys(this.vue).map(k => `v-${k}=\"${this.vue[k]}\"`).join(\" \") : ''}><div style=\"position:relative; box-sizing:border-box;\" ${(this.tabindex)? 'tabindex=\"'+this.tabindex+'\"' : ''}><contents></contents></div></div>`"
+    },
+    "textarea": {
+      "template": "`<textarea style=\"width:100%; height:100%; font-family:unset; font-size:11px; border:solid 1px #888; box-sizing:border-box; outline:none;  ${(this.style)? this.style : ''}\" ${(this.model)? 'v-model=\"'+this.model+'\"' : ''} ${(this.value)? ':value=\"'+this.value+'\"' : ''} ${(this.readonly)? 'readonly' : ''} spellcheck=\"false\"></textarea>`",
+      "$name": "テキストエリア"
+    },
+    "check": {
+      "template": "`<input type=\"checkbox\" style=\"box-sizing:border-box; outline:none; \" ${(this.model)? 'v-model=\"'+this.model+'\"' : ''} ${(this.value)? ':value=\"'+this.value+'\"' : ''} ${(this.readonly)? 'readonly' : ''} />`",
+      "$name": "チェックボックス"
+    },
+    "number": {
+      "template": "`<input type=\"number\" style=\"width:100%; height:100%; font-family:unset; font-size:11px; border:solid 1px #888; box-sizing:border-box; outline:none; \" ${(this.model)? 'v-model=\"'+this.model+'\"' : ''} ${(this.value)? ':value=\"'+this.value+'\"' : ''} ${(this.readonly)? 'readonly' : ''} spellcheck=\"false\" />`",
+      "$name": "数値入力"
+    },
+    "arrayGroupVertical": {
+      "template": "`<template v-for=\"(value,index) in ${this.model}\"><div :style=\"{position:'relative', boxSizing:'border-box', marginTop:'0px', marginLeft:'0px', top:(index * ${this.layout.height}).toString()+'px'}\"><contents></contents></div></template>`",
+      "outerTagPositioning": "relative"
+    },
+    "arrayGroupHorizontal": {
+      "template": "`<template v-for=\"(value,index) in ${this.model}\"><div :style=\"{position:'relative', boxSizing:'border-box', marginTop:'0px', marginLeft:'0px', left:(index * ${this.layout.width}).toString()+'px'}\"><contents></contents></div></template>`",
+      "outerTagPositioning": "relative"
+    },
+    "objectGroupVertical": {
+      "template": "`<template v-for=\"(value,key,index) in ${this.model}\"><div :style=\"{position:'relative', boxSizing:'border-box', marginTop:'0px', marginLeft:'0px', top:(index * ${this.layout.height}).toString()+'px'}\"><contents></contents></div></template>`",
+      "outerTagPositioning": "relative"
+    },
+    "objectGroupHorizontal": {
+      "template": "`<template v-for=\"(value,key,index) in ${this.model}\"><div :style=\"{position:'relative', boxSizing:'border-box', marginTop:'0px', marginLeft:'0px', left:(index * ${this.layout.width}).toString()+'px'}\"><contents></contents></div></template>`",
+      "outerTagPositioning": "relative"
+    },
+    "raw": {
+      "template": "`${(this.html)? this.html : ''}`"
+    },
+    "image": {
+      "template": "`<div style=\"width:100%; height:100%;display:flex;align-items:center;justify-content:center;\"><img style=\"max-width:100%; max-height:100%; width:fit-content; height:fit-content; box-sizing:border-box; font-size:11px; font-family:unset; ${(this.style)? this.style : ''}\" ${(this.event)? Object.keys(this.event).map(k => `@${k}=\"${this.event[k]}\"`).join(\" \") : ''} ${(this.bind)? Object.keys(this.bind).map(k => `:${k}=\"${this.bind[k]}\"`).join(\" \") : ''} /></div>`"
+    }
+  },
+  "stock": {
+    "$view": {
+      "storeStock": {
+        "$component": {
+          "form": {
+            "type": "#viewComponentType.form",
+            "layout": {
+              "x": 10,
+              "y": 35,
+              "width": 410,
+              "height": 205
+            },
+            "label": "在庫入庫"
+          },
+          "labelStockCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 30,
+              "y": 85,
+              "width": 50,
+              "height": 20
+            },
+            "label": "在庫CD",
+            "textAlign": "end"
+          },
+          "stockCd": {
+            "type": "#viewComponentType.text",
+            "label": "XXXXXXXXXXXX",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 90,
+              "y": 85,
+              "width": 100,
+              "height": 20
+            }
+          },
+          "labelItemCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 30,
+              "y": 110,
+              "width": 50,
+              "height": 20
+            },
+            "label": "品目CD",
+            "textAlign": "end"
+          },
+          "itemCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 90,
+              "y": 110,
+              "width": 70,
+              "height": 20
+            },
+            "label": "XXXXXXXX"
+          },
+          "itemName": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 160,
+              "y": 110,
+              "width": 230,
+              "height": 20
+            },
+            "label": "ＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮ"
+          },
+          "labelQty": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 30,
+              "y": 160,
+              "width": 50,
+              "height": 20
+            },
+            "label": "入庫数量",
+            "textAlign": "end"
+          },
+          "qty": {
+            "type": "#viewComponentType.text",
+            "label": "999999999",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 90,
+              "y": 160,
+              "width": 70,
+              "height": 20
+            }
+          },
+          "register": {
+            "type": "#viewComponentType.button",
+            "label": "登録",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 20,
+              "y": 205,
+              "width": 90,
+              "height": 20
+            }
+          },
+          "close": {
+            "type": "#viewComponentType.button",
+            "label": "閉じる",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 320,
+              "y": 205,
+              "width": 90,
+              "height": 20
+            }
+          },
+          "placeCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 90,
+              "y": 135,
+              "width": 55,
+              "height": 20
+            },
+            "label": "XXXXXX"
+          },
+          "labelPlaceCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 30,
+              "y": 135,
+              "width": 50,
+              "height": 20
+            },
+            "label": "場所CD",
+            "textAlign": "end"
+          },
+          "detail": {
+            "type": "#viewComponentType.container",
+            "layout": {
+              "x": 20,
+              "y": 75,
+              "width": 390,
+              "height": 120
+            }
+          }
+        }
+      },
+      "retrieveStock": {
+        "$component": {
+          "form": {
+            "type": "#viewComponentType.form",
+            "layout": {
+              "x": 10,
+              "y": 35,
+              "width": 385,
+              "height": 180
+            },
+            "label": "在庫出庫"
+          },
+          "labelStockCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 15,
+              "y": 75,
+              "width": 50,
+              "height": 20
+            },
+            "label": "在庫CD",
+            "textAlign": "end"
+          },
+          "stockCd": {
+            "type": "#viewComponentType.text",
+            "label": "XXXXXXXXXXXX",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 75,
+              "y": 75,
+              "width": 100,
+              "height": 20
+            }
+          },
+          "labelItemCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 15,
+              "y": 100,
+              "width": 50,
+              "height": 20
+            },
+            "label": "品目CD",
+            "textAlign": "end"
+          },
+          "itemCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 75,
+              "y": 100,
+              "width": 70,
+              "height": 20
+            },
+            "label": "XXXXXXXX"
+          },
+          "itemName": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 145,
+              "y": 100,
+              "width": 230,
+              "height": 20
+            },
+            "label": "ＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮ"
+          },
+          "labelQty": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 15,
+              "y": 150,
+              "width": 50,
+              "height": 20
+            },
+            "label": "出庫数量",
+            "textAlign": "end"
+          },
+          "qty": {
+            "type": "#viewComponentType.text",
+            "label": "999999999",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 75,
+              "y": 150,
+              "width": 70,
+              "height": 20
+            }
+          },
+          "register": {
+            "type": "#viewComponentType.button",
+            "label": "登録",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 20,
+              "y": 185,
+              "width": 90,
+              "height": 20
+            }
+          },
+          "close": {
+            "type": "#viewComponentType.button",
+            "label": "閉じる",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 295,
+              "y": 185,
+              "width": 90,
+              "height": 20
+            }
+          },
+          "placeCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 75,
+              "y": 125,
+              "width": 55,
+              "height": 20
+            },
+            "label": "XXXXXX"
+          },
+          "labelPlaceCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 15,
+              "y": 125,
+              "width": 50,
+              "height": 20
+            },
+            "label": "場所CD",
+            "textAlign": "end"
+          }
+        }
+      },
+      "transferStock": {
+        "$component": {
+          "form": {
+            "type": "#viewComponentType.form",
+            "layout": {
+              "x": 10,
+              "y": 35,
+              "width": 420,
+              "height": 200
+            },
+            "label": "在庫移動"
+          },
+          "labelItemCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 20,
+              "y": 75,
+              "width": 50,
+              "height": 20
+            },
+            "label": "品目CD",
+            "textAlign": "end"
+          },
+          "itemCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 80,
+              "y": 75,
+              "width": 70,
+              "height": 20
+            },
+            "label": "XXXXXXXX"
+          },
+          "itemName": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 150,
+              "y": 75,
+              "width": 230,
+              "height": 20
+            },
+            "label": "ＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮ"
+          },
+          "labelQty": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 30,
+              "y": 170,
+              "width": 50,
+              "height": 20
+            },
+            "label": "移動数量",
+            "textAlign": "end"
+          },
+          "qty": {
+            "type": "#viewComponentType.text",
+            "label": "999999999",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 90,
+              "y": 170,
+              "width": 70,
+              "height": 20
+            }
+          },
+          "register": {
+            "type": "#viewComponentType.button",
+            "label": "登録",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 20,
+              "y": 205,
+              "width": 90,
+              "height": 20
+            }
+          },
+          "close": {
+            "type": "#viewComponentType.button",
+            "label": "閉じる",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 330,
+              "y": 205,
+              "width": 90,
+              "height": 20
+            }
+          },
+          "labelFromStockCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 25,
+              "y": 110,
+              "width": 80,
+              "height": 20
+            },
+            "label": "移動元在庫CD",
+            "textAlign": "end"
+          },
+          "fromStockCd": {
+            "type": "#viewComponentType.text",
+            "label": "XXXXXXXXXXXX",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 110,
+              "y": 110,
+              "width": 100,
+              "height": 20
+            }
+          },
+          "labelFromPlaceCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 30,
+              "y": 135,
+              "width": 75,
+              "height": 20
+            },
+            "label": "移動元場所CD",
+            "textAlign": "end"
+          },
+          "fromPlaceCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 110,
+              "y": 135,
+              "width": 55,
+              "height": 20
+            },
+            "label": "XXXXXX"
+          },
+          "toStockCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 315,
+              "y": 110,
+              "width": 100,
+              "height": 20
+            },
+            "label": "XXXXXXXXXXXX"
+          },
+          "labelToStockCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 225,
+              "y": 110,
+              "width": 85,
+              "height": 20
+            },
+            "label": "移動先在庫CD",
+            "textAlign": "end"
+          },
+          "toPlaceCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 315,
+              "y": 135,
+              "width": 55,
+              "height": 20
+            },
+            "label": "XXXXXX"
+          },
+          "labelToPlaceCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 230,
+              "y": 135,
+              "width": 80,
+              "height": 20
+            },
+            "label": "移動先場所CD",
+            "textAlign": "end"
+          }
+        }
+      },
+      "listStock": {
+        "$component": {
+          "form": {
+            "type": "#viewComponentType.form",
+            "layout": {
+              "x": 10,
+              "y": 35,
+              "width": 825,
+              "height": 540
+            },
+            "label": "在庫一覧"
+          },
+          "stocks": {
+            "type": "#viewComponentType.arrayGroupVertical",
+            "layout": {
+              "x": 30,
+              "y": 180,
+              "width": 130,
+              "height": 50
+            },
+            "model": "stocks"
+          },
+          "labelStockCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 60,
+              "y": 120,
+              "width": 100,
+              "height": 25
+            },
+            "label": "在庫CD",
+            "style": "background-color:#FAFAFA; border:solid 1px #AAA;"
+          },
+          "detail": {
+            "type": "#viewComponentType.container",
+            "layout": {
+              "x": 25,
+              "y": 175,
+              "width": 795,
+              "height": 350
+            },
+            "style": "overflow:auto; border-radius:0px; background-color:transparent; border:none;"
+          },
+          "stockCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 60,
+              "y": 180,
+              "width": 100,
+              "height": 25
+            },
+            "model": "value.stockCd"
+          },
+          "itemCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 60,
+              "y": 205,
+              "width": 100,
+              "height": 25
+            },
+            "model": "value.itemCd"
+          },
+          "labelItemCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 60,
+              "y": 145,
+              "width": 100,
+              "height": 25
+            },
+            "label": "品目CD",
+            "style": "background-color:#FAFAFA; border:solid 1px #AAA;"
+          },
+          "labelNo": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 30,
+              "y": 120,
+              "width": 30,
+              "height": 50
+            },
+            "label": "No",
+            "style": "background-color:#FAFAFA; border:solid 1px #AAA;"
+          },
+          "no": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 30,
+              "y": 180,
+              "width": 30,
+              "height": 50
+            },
+            "model": "index"
+          },
+          "labelCondStockCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 20,
+              "y": 75,
+              "width": 55,
+              "height": 25
+            },
+            "label": "在庫CD",
+            "textAlign": "center",
+            "style": "background-color:#EAEAEA; border:solid 1px #CCC;"
+          },
+          "condStockCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 75,
+              "y": 75,
+              "width": 105,
+              "height": 25
+            },
+            "model": "condStockCd"
+          },
+          "labelCondItemCd": {
+            "type": "#viewComponentType.label",
+            "layout": {
+              "x": 190,
+              "y": 75,
+              "width": 55,
+              "height": 25
+            },
+            "label": "品目CD",
+            "textAlign": "center",
+            "style": "background-color:#EAEAEA; border:solid 1px #CCC;"
+          },
+          "condItemCd": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 245,
+              "y": 75,
+              "width": 105,
+              "height": 25
+            },
+            "model": "condItemCd"
+          },
+          "search": {
+            "type": "#viewComponentType.button",
+            "layout": {
+              "x": 735,
+              "y": 75,
+              "width": 90,
+              "height": 25
+            },
+            "label": "検索"
+          },
+          "sectionDetail": {
+            "type": "#viewComponentType.container",
+            "layout": {
+              "x": 20,
+              "y": 110,
+              "width": 805,
+              "height": 420
+            },
+            "style": "background-color:transparent;"
+          },
+          "unnamed2": {
+            "type": "#viewComponentType.button",
+            "layout": {
+              "x": 725,
+              "y": 540,
+              "width": 100,
+              "height": 25
+            },
+            "label": "閉じる"
+          }
+        }
+      },
+      "designer": {
+        "$component": {
+          "form": {
+            "type": "#viewComponentType.form",
+            "layout": {
+              "x": 15,
+              "y": 95,
+              "width": 580,
+              "height": 60
+            },
+            "label": "項目",
+            "baseColor": " #555"
+          },
+          "add": {
+            "type": "#viewComponentType.button",
+            "label": "追加",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 20,
+              "y": 130,
+              "width": 55,
+              "height": 20
+            }
+          },
+          "delete": {
+            "type": "#viewComponentType.button",
+            "label": "削除",
+            "layout": {
+              "type": "#layoutType.RECTANGLE",
+              "x": 80,
+              "y": 130,
+              "width": 55,
+              "height": 20
+            }
+          },
+          "name": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 140,
+              "y": 130,
+              "width": 230,
+              "height": 20
+            },
+            "label": "ＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮＮ"
+          },
+          "formOuter": {
+            "type": "#viewComponentType.form",
+            "layout": {
+              "x": 10,
+              "y": 35,
+              "width": 590,
+              "height": 200
+            },
+            "baseColor": " #555",
+            "label": "ビュー"
+          },
+          "viewPath": {
+            "type": "#viewComponentType.text",
+            "layout": {
+              "x": 15,
+              "y": 70,
+              "width": 275,
+              "height": 20
+            }
+          },
+          "rename": {
+            "type": "#viewComponentType.button",
+            "layout": {
+              "x": 375,
+              "y": 130,
+              "width": 65,
+              "height": 20
+            },
+            "label": "名称変更"
+          },
+          "edit": {
+            "type": "#viewComponentType.button",
+            "layout": {
+              "x": 445,
+              "y": 130,
+              "width": 65,
+              "height": 20
+            },
+            "label": "編集"
+          },
+          "genCode": {
+            "type": "#viewComponentType.button",
+            "layout": {
+              "x": 515,
+              "y": 130,
+              "width": 75,
+              "height": 20
+            },
+            "label": "コード生成"
+          },
+          "editView": {
+            "type": "#viewComponentType.button",
+            "layout": {
+              "x": 295,
+              "y": 70,
+              "width": 100,
+              "height": 20
+            },
+            "label": "編集"
+          }
+        }
+      }
+    },
+    "$process": {
+      "registerStock": {
+        "$input": {
+          "stockTransfer": "#stock.$model.stockTransfer"
+        },
+        "code": "# 在庫取得\n  在庫CDで在庫レコードを取得する。\n\n  ? 1件取得\n    \n    # 在庫更新\n      //TODO\n\n  ? 0件取得\n\n    # 在庫登録\n      //TODO\n\n# 在庫受払登録\n  在庫受払を登録する。\n  {{stock.$io.stockTransfer.insert}}を入力.stockTransferを引数に実行する。\n\n# メッセージ表示\n  登録完了メッセージをメッセージダイアログで表示する。\n",
+        "$output": {
+          "result": {
+            "type": "#dataType.number"
+          }
+        }
+      }
+    },
+    "$io": {
+      "INSERT_SALE": {
+        "type": "#ioType.db",
+        "params$": {
+          "MODEL": {
+            "type": "#stockDomain.models$.SALE"
+          }
+        },
+        "sql": "INSERT INTO SALE \n(SALE_NO,ISSUE_DATE,DESCRIPTION,AMOUNT) \nVALUES (@MODEL.SALE_NO,@MODEL.ISSUE_DATE,@MODEL.DESCRIPTION,@MODEL.AMOUNT)"
+      },
+      "DELETE_SALE": {
+        "type": "#ioType.db",
+        "params$": {
+          "MODEL": {
+            "type": "#stockDomain.models$.SALE"
+          }
+        },
+        "sql": "DELETE FROM SALE WHERE SALE_NO = @MODEL.SALE_NO"
+      },
+      "stockTransfer": {
+        "name": "在庫受払入出力",
+        "insert": {
+          "type": "#ioType.db",
+          "$param": {
+            "stockTransfer": {
+              "type": "#stock.$model.stockTransfer"
+            }
+          },
+          "sql": "INSERT INTO stock_transfer (stock_id, item_id, qty)\nVALUES ($stockTransfer.stockId, $stockTransfer.itemId, $stockTransfer.qty);"
+        }
+      },
+      "stock": {
+        "selectByPrimaryKey": {
+          "type": "#ioType.db.query",
+          "sql": "SELECT stock_id as stockId, stock_cd as stockCd, place_id as placeId, item_id as itemId, qty, reserved_qty as reservedQty FROM stock WHERE stock_id = @stockId",
+          "param": {
+            "stockId": {}
+          }
+        }
+      }
+    },
+    "$model": {
+      "SALE": {
+        "SALE_NO": {
+          "type": "#dataType.number"
+        },
+        "ISSUE_DATE": {
+          "type": "#dataType.datetime"
+        },
+        "DESCRIPTION": {
+          "type": "#dataType.text"
+        },
+        "AMOUNT": {
+          "type": "#dataType.number"
+        }
+      },
+      "stockTransfer": {
+        "transferId": {
+          "type": "#domainType.id"
+        },
+        "stockId": {
+          "type": "#domainType.id"
+        },
+        "itemId": {
+          "type": "#domainType.id"
+        },
+        "qty": {
+          "type": "#domainType.qty"
+        }
+      }
+    }
+  },
+  "$database": {
+    "$table": {
+      "stock_transfer": {
+        "name": "在庫受払",
+        "$column": {
+          "stock_transfer_id": {
+            "type": "#domainType.id",
+            "name": "受払ID"
+          },
+          "stock_id": {
+            "type": "#domainType.id",
+            "name": "在庫ID"
+          },
+          "item_id": {
+            "type": "#domainType.id",
+            "name": "品目ID"
+          },
+          "qty": {
+            "type": "#domainType.qty",
+            "name": "受払数量"
+          }
+        }
+      },
+      "item": {
+        "name": "品目",
+        "$column": {
+          "item_id": {
+            "type": "#domainType.id",
+            "name": "品目ID"
+          },
+          "item_cd": {
+            "type": "#domainType.itemCd",
+            "name": "品目CD"
+          },
+          "name": {
+            "type": "#domainType.longName",
+            "name": "商品名"
+          }
+        }
+      },
+      "place": {
+        "name": "場所",
+        "$column": {
+          "place_id": {
+            "type": "#domainType.id",
+            "name": "場所ID"
+          },
+          "place_cd": {
+            "type": "#domainType.placeCd",
+            "name": "場所CD"
+          },
+          "name": {
+            "type": "#domainType.longName",
+            "name": "場所名"
+          }
+        }
+      },
+      "stock": {
+        "name": "在庫",
+        "$column": {
+          "stock_id": {
+            "type": "bigint",
+            "name": "在庫ID",
+            "primaryKey": 1,
+            "ddlOption": "auto_increment"
+          },
+          "stock_cd": {
+            "type": "varchar(8)",
+            "name": "在庫CD",
+            "comment": ""
+          },
+          "place_id": {
+            "type": "bigint",
+            "name": "場所ID"
+          },
+          "item_id": {
+            "type": "bigint",
+            "name": "品目ID"
+          },
+          "qty": {
+            "type": "bigint",
+            "name": "在庫数量"
+          },
+          "reserved_qty": {
+            "type": "bigint",
+            "name": "引当数量"
+          }
+        }
+      }
+    }
+  },
+  "$schema": {
+    "$view": {
+      "type": "object",
+      "properties": {
+        "$component": {
+          "type": "object",
+          "properties": {}
+        }
+      }
+    }
+  },
+  "$view": {
+    "listTestReport": {
+      "$component": {
+        "form": {
+          "type": "#viewComponentType.form",
+          "layout": {
+            "x": 25,
+            "y": 50,
+            "width": 655,
+            "height": 365
+          },
+          "label": "TestReport - List"
+        },
+        "testReports": {
+          "type": "#viewComponentType.arrayGroupVertical",
+          "layout": {
+            "x": 40,
+            "y": 120,
+            "width": 585,
+            "height": 25
+          },
+          "model": "testReports"
+        },
+        "headerTestReportCd": {
+          "type": "#viewComponentType.label",
+          "layout": {
+            "x": 45,
+            "y": 90,
+            "width": 100,
+            "height": 20
+          },
+          "label": "TestReportCd"
+        },
+        "headerName": {
+          "type": "#viewComponentType.label",
+          "layout": {
+            "x": 150,
+            "y": 90,
+            "width": 365,
+            "height": 20
+          },
+          "label": "Name"
+        },
+        "edit": {
+          "type": "#viewComponentType.button",
+          "layout": {
+            "x": 520,
+            "y": 120,
+            "width": 100,
+            "height": 20
+          },
+          "label": "Edit",
+          "click": "edit(value)"
+        },
+        "headerEdit": {
+          "type": "#viewComponentType.label",
+          "layout": {
+            "x": 520,
+            "y": 90,
+            "width": 100,
+            "height": 20
+          },
+          "label": ""
+        },
+        "containerTestReports": {
+          "type": "#viewComponentType.container",
+          "layout": {
+            "x": 35,
+            "y": 115,
+            "width": 635,
+            "height": 290
+          },
+          "style": "overflow-y:scroll; background-color:transparent; border-radius:0px;"
+        },
+        "testReportCd": {
+          "type": "#viewComponentType.text",
+          "layout": {
+            "x": 45,
+            "y": 120,
+            "width": 100,
+            "height": 20
+          },
+          "model": "value.testReportCd"
+        },
+        "name": {
+          "type": "#viewComponentType.text",
+          "layout": {
+            "x": 150,
+            "y": 120,
+            "width": 365,
+            "height": 20
+          },
+          "model": "value.name"
+        }
+      }
+    },
+    "editTestReport": {
+      "$component": {
+        "form": {
+          "type": "#viewComponentType.form",
+          "layout": {
+            "x": 15,
+            "y": 40,
+            "width": 965,
+            "height": 685
+          },
+          "label": "TestReport - Edit"
+        },
+        "testReportCd": {
+          "type": "#viewComponentType.text",
+          "layout": {
+            "x": 125,
+            "y": 80,
+            "width": 110,
+            "height": 20
+          },
+          "model": "testReport.testReportCd",
+          "event": {
+            "change": "changeTestReport()"
+          }
+        },
+        "name": {
+          "type": "#viewComponentType.text",
+          "layout": {
+            "x": 235,
+            "y": 80,
+            "width": 735,
+            "height": 20
+          },
+          "model": "testReport.name",
+          "readonly": true
+        },
+        "labelTestReport": {
+          "type": "#viewComponentType.label",
+          "layout": {
+            "x": 25,
+            "y": 80,
+            "width": 100,
+            "height": 20
+          },
+          "label": "TestReport"
+        },
+        "currentPage": {
+          "type": "#viewComponentType.text",
+          "layout": {
+            "x": 25,
+            "y": 105,
+            "width": 40,
+            "height": 20
+          },
+          "bind": {
+            "value": "currentPage + 1"
+          },
+          "event": {
+            "change": "changeCurrentPage()"
+          }
+        },
+        "totalPage": {
+          "type": "#viewComponentType.label",
+          "layout": {
+            "x": 80,
+            "y": 105,
+            "width": 40,
+            "height": 20
+          },
+          "readonly": true,
+          "textAlign": "left",
+          "html": "testReport.pages.length"
+        },
+        "pageSeparator": {
+          "type": "#viewComponentType.label",
+          "layout": {
+            "x": 65,
+            "y": 105,
+            "width": 15,
+            "height": 20
+          },
+          "label": "/",
+          "style": "border:none"
+        },
+        "containerPage": {
+          "type": "#viewComponentType.container",
+          "layout": {
+            "x": 25,
+            "y": 130,
+            "width": 945,
+            "height": 525
+          },
+          "vue": {
+            "if": "page"
+          }
+        },
+        "add": {
+          "type": "#viewComponentType.button",
+          "layout": {
+            "x": 25,
+            "y": 695,
+            "width": 100,
+            "height": 20
+          },
+          "label": "Add",
+          "event": {
+            "click": "addPage()"
+          }
+        },
+        "delete": {
+          "type": "#viewComponentType.button",
+          "layout": {
+            "x": 615,
+            "y": 695,
+            "width": 100,
+            "height": 20
+          },
+          "label": "Delete",
+          "event": {
+            "click": "deletePage()"
+          }
+        },
+        "back": {
+          "type": "#viewComponentType.button",
+          "layout": {
+            "x": 260,
+            "y": 695,
+            "width": 100,
+            "height": 20
+          },
+          "label": "Back",
+          "event": {
+            "click": "movePageBack()"
+          }
+        },
+        "next": {
+          "type": "#viewComponentType.button",
+          "layout": {
+            "x": 370,
+            "y": 695,
+            "width": 100,
+            "height": 20
+          },
+          "label": "Next",
+          "event": {
+            "click": "movePageNext()"
+          }
+        },
+        "insert": {
+          "type": "#viewComponentType.button",
+          "layout": {
+            "x": 130,
+            "y": 695,
+            "width": 100,
+            "height": 20
+          },
+          "label": "Insert",
+          "event": {
+            "click": "insertPage()"
+          }
+        },
+        "pagePrev": {
+          "type": "#viewComponentType.button",
+          "layout": {
+            "x": 25,
+            "y": 665,
+            "width": 40,
+            "height": 20
+          },
+          "label": "Prev",
+          "event": {
+            "click": "prevCurrentPage()"
+          }
+        },
+        "pageNext": {
+          "type": "#viewComponentType.button",
+          "layout": {
+            "x": 930,
+            "y": 665,
+            "width": 40,
+            "height": 20
+          },
+          "label": "Next",
+          "event": {
+            "click": "nextCurrentPage()"
+          }
+        },
+        "comment": {
+          "type": "#viewComponentType.textarea",
+          "layout": {
+            "x": 35,
+            "y": 610,
+            "width": 925,
+            "height": 35
+          },
+          "model": "page.comment",
+          "style": "resize:none; overflow-y:scroll;"
+        },
+        "close": {
+          "type": "#viewComponentType.button",
+          "layout": {
+            "x": 870,
+            "y": 695,
+            "width": 100,
+            "height": 20
+          },
+          "label": "Close",
+          "event": {
+            "click": "close()"
+          }
+        },
+        "image": {
+          "type": "#viewComponentType.image",
+          "layout": {
+            "x": 35,
+            "y": 140,
+            "width": 925,
+            "height": 460
+          },
+          "bind": {
+            "src": "page.image"
+          }
+        },
+        "pasteImage": {
+          "type": "#viewComponentType.text",
+          "layout": {
+            "x": 155,
+            "y": 105,
+            "width": 815,
+            "height": 20
+          },
+          "readonly": "value",
+          "value": "'Paste image here!'",
+          "event": {
+            "paste": "pasteImage($event)"
+          }
+        }
+      }
+    }
+  }
+}

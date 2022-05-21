@@ -12,8 +12,14 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Runtime.Serialization.Json;
 using System.Xml.Linq;
+using System.Web;
+using System.Text.Json;
 
 namespace Elem {
+  public enum RouteMethod { 
+    GET, PUT, POST, DELETE, OTHER
+  }
+
   [AttributeUsage(AttributeTargets.Class)]
   class Component : Attribute { }
 
@@ -47,6 +53,12 @@ namespace Elem {
       GroupName = groupName;
     }
   }
+
+  [AttributeUsage(AttributeTargets.Parameter)]
+  class RequestBody : Attribute { }
+
+  [AttributeUsage(AttributeTargets.Parameter)]
+  class RequestJson : Attribute { }
 
   class Context {
     protected const BindingFlags INJECTION_TARGET = 
@@ -236,6 +248,15 @@ namespace Elem {
     [AutowiredGroup("Elem.Controllers")]
     public List<object> Controllers { get; set; }
 
+    public JsonSerializerOptions JsonSerializerOptions { get; set; }
+
+    public Server() {
+      this.JsonSerializerOptions = new JsonSerializerOptions() {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        // WriteIndented = true
+      };
+    }
+
     public void Start(int port) {
       Console.WriteLine( "*** elem started on port {0} ***", port);
       Console.WriteLine( "Press Ctrl+C to stop.");
@@ -247,18 +268,45 @@ namespace Elem {
         listener.Prefixes.Add(rootUrl);
         listener.Start();
         while (true) {
-          Routing(listener.GetContext());
+          ResolveRouting(listener.GetContext());
         }
       }
       catch (Exception ex) {
-        Console.WriteLine("Error: " + ex.Message);
+        Console.WriteLine("*** Error ***");
+        Console.WriteLine("message: " + ex.Message);
+        Console.WriteLine("stack trace: ");
+        Console.WriteLine(ex.StackTrace);
+        Console.WriteLine();
         throw ex;
       }
     }
 
-    public void Routing(HttpListenerContext context) {
+    public RouteMethod StringToRouteMethod(string methodName) {
+      switch(methodName) {
+        case "GET":
+          return RouteMethod.GET;
+          break;
+        case "POST":
+          return RouteMethod.POST;
+          break;
+        case "PUT":
+          return RouteMethod.PUT;
+          break;
+        case "DELETE":
+          return RouteMethod.DELETE;
+          break;
+        default:
+          return RouteMethod.OTHER;
+          break;
+      }
+    }
+
+    public void ResolveRouting(HttpListenerContext context) {
       string url = context.Request.Url.ToString();
       string localPath = context.Request.Url.LocalPath.ToString();
+      var uri = new Uri(url);
+      var queryParam = HttpUtility.ParseQueryString(uri.Query);
+      var httpMethod = context.Request.HttpMethod;
 
       context.Response.StatusCode = 200;
 
@@ -269,21 +317,86 @@ namespace Elem {
                                        | BindingFlags.DeclaredOnly),
                     (value, m) => new { Ctrl = value, MethodInfo = m })
         .Where(x => 
-            (null != x.MethodInfo.GetCustomAttribute(typeof(UrlPattern)))
+            (null != x.MethodInfo.GetCustomAttribute(typeof(Routing)))
+            && (StringToRouteMethod(httpMethod) 
+              == ((Routing)x.MethodInfo.GetCustomAttribute(typeof(Routing))).Method))
+        .Where(x => 
+            (null != x.MethodInfo.GetCustomAttribute(typeof(Routing)))
             && Regex.IsMatch(localPath, 
-                ((UrlPattern)x.MethodInfo.GetCustomAttribute(
-                        typeof(UrlPattern))).Pattern))
+                ((Routing)x.MethodInfo.GetCustomAttribute(
+                        typeof(Routing))).Pattern))
         .FirstOrDefault();
 
       if(null != ctrlMethod) {
-        ctrlMethod.MethodInfo.Invoke(ctrlMethod.Ctrl, 
-            new object[] { context });
+        // Call method when a route found
+        try {
+          List<object> parameters = new List<object>();
+
+          foreach(var p in ctrlMethod.MethodInfo.GetParameters()) {
+            var request = context.Request;
+            RequestBody attrRequestBody = (RequestBody)Attribute.GetCustomAttribute(p, typeof(RequestBody));
+            RequestJson attrRequestJson = (RequestJson)Attribute.GetCustomAttribute(p, typeof(RequestJson));
+
+            if(null != attrRequestBody) {
+              using (var reader = new StreamReader(request.InputStream, request.ContentEncoding)) {
+                string body = reader.ReadToEnd();
+                parameters.Add(body);
+              }
+            }
+            else if(null != attrRequestJson) {
+              parameters.Add(JsonSerializer.Deserialize(request.InputStream, p.ParameterType, this.JsonSerializerOptions));
+            }
+            else if(p.ParameterType == typeof(HttpListenerContext)) {
+              parameters.Add(context);
+            } 
+            else if(p.ParameterType == typeof(Int32)) {
+              parameters.Add(Int32.Parse(queryParam.Get(p.Name)));
+            }
+            else if(p.ParameterType == typeof(Int64)) {
+              parameters.Add(Int64.Parse(queryParam.Get(p.Name)));
+            }
+            else if(p.ParameterType == typeof(Single)) {
+              parameters.Add(Single.Parse(queryParam.Get(p.Name)));
+            }
+            else if(p.ParameterType == typeof(Double)) {
+              parameters.Add(Double.Parse(queryParam.Get(p.Name)));
+            }
+            else if(p.ParameterType == typeof(Boolean)) {
+              parameters.Add(Boolean.Parse(queryParam.Get(p.Name)));
+            }
+            else if(p.ParameterType == typeof(Decimal)) {
+              parameters.Add(Decimal.Parse(queryParam.Get(p.Name)));
+            }
+            else if(p.ParameterType == typeof(string)) {
+              parameters.Add(queryParam.Get(p.Name));
+            }
+            else {
+              throw new Exception("Unsupported controller method parameter type."
+                  + " Class=" + ctrlMethod.MethodInfo.DeclaringType.Name + "." + ctrlMethod.MethodInfo.Name 
+                  + " ParameterType=" + p.ParameterType.Name);
+            }
+          }
+
+          ctrlMethod.MethodInfo.Invoke(ctrlMethod.Ctrl, parameters.ToArray());
+        } catch(Exception ex) {
+          // error 500
+          context.Response.StatusCode = 500;
+          ServerUtil.WriteResponseText(context, "500 Internal Server Error");
+          Console.WriteLine("*** Internal Server Error ***");
+          Console.WriteLine("message: " + ex.Message);
+          Console.WriteLine("stack trace: ");
+          Console.WriteLine(ex.StackTrace);
+          Console.WriteLine();
+        }
       } else {
+        // Try fetch static resource
         string path = STATIC_ROOT 
           + url.Substring(rootUrl.Length, url.Length - rootUrl.Length);
         if(File.Exists(path)) {
+          // Return static resource
           ServerUtil.WriteResponseBytes(context, File.ReadAllBytes(path));
         } else {
+          // error 404
           context.Response.StatusCode = 404;
           ServerUtil.WriteResponseText(context, "404 not found!");
         }
@@ -293,6 +406,15 @@ namespace Elem {
   }
 
   class ServerUtil {
+    public static JsonSerializerOptions JsonSerializerOptions { get; set; }
+
+    static ServerUtil() {
+      JsonSerializerOptions = new JsonSerializerOptions() {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        // WriteIndented = true
+      };
+    }
+
     public static void WriteResponseText(
         HttpListenerContext context, string text) {
       byte[] content = Encoding.UTF8.GetBytes(text);
@@ -305,20 +427,23 @@ namespace Elem {
     }
 
     public static string ToJson(object obj) {
-      using (var ms = new MemoryStream())
-      using (var sr = new StreamReader(ms)) {
-        (new DataContractJsonSerializer(obj.GetType())).WriteObject(ms, obj);
-        ms.Position = 0;
-        return sr.ReadToEnd();
-      }
+      // using (var ms = new MemoryStream())
+      // using (var sr = new StreamReader(ms)) {
+      //   (new DataContractJsonSerializer(obj.GetType())).WriteObject(ms, obj);
+      //   ms.Position = 0;
+      //   return sr.ReadToEnd();
+      // }
+      return JsonSerializer.Serialize(obj, JsonSerializerOptions);
     }
   }
 
   [AttributeUsage(AttributeTargets.Method)]
-  class UrlPattern : Attribute {
+  class Routing : Attribute {
     public string Pattern { get; set; }
-    public UrlPattern(string pattern) {
+    public RouteMethod Method { get; set; }
+    public Routing(string pattern, RouteMethod method = RouteMethod.GET) {
       Pattern = pattern;
+      Method = method;
     }
   }
 }

@@ -26,14 +26,21 @@ namespace SampleApp {
     }
   }
 
+  class Item {
+    public int ItemId { get; set; } 
+    public string ItemCd { get; set; } 
+    public Item ParentItem { get; set; } 
+  }
+
   [Controller]
   class ItemController {
     [Autowired]
     public IItemService Svc { set; get; }
 
-    [UrlPattern("/item/list")]
-    public void List(HttpListenerContext context) {
-      ServerUtil.WriteResponseText(context, ServerUtil.ToJson(Svc.GetList()));
+    [Routing("/item/list", RouteMethod.POST)]
+    public void List(HttpListenerContext context, int a, string b, [RequestJson]Item item) {
+      // Console.WriteLine(ServerUtil.ToJson(item));
+      ServerUtil.WriteResponseText(context, ServerUtil.ToJson(item));
     }
   }
 
@@ -42,7 +49,7 @@ namespace SampleApp {
     [Autowired]
     public IPersonService Svc { set; get; }
 
-    [UrlPattern("/person/list")]
+    [Routing("/person/list")]
     public void List(HttpListenerContext context) {
       ServerUtil.WriteResponseText(context, ServerUtil.ToJson(Svc.GetList()));
     }
