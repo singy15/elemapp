@@ -60,6 +60,9 @@ namespace Elem {
   [AttributeUsage(AttributeTargets.Parameter)]
   class RequestJson : Attribute { }
 
+  [AttributeUsage(AttributeTargets.Parameter)]
+  class UriParam : Attribute { }
+
   class Context {
     protected const BindingFlags INJECTION_TARGET = 
       BindingFlags.InvokeMethod 
@@ -301,6 +304,16 @@ namespace Elem {
       }
     }
 
+    public string ConvertParameterizedUriToRegexPattern(string parameterizedUri) {
+      var matches = Regex.Matches(parameterizedUri, "{(?<name>.+?)}");
+      var regexPattern = parameterizedUri;
+      foreach(Match m in matches) {
+        string name = m.Groups["name"].Value;
+        regexPattern = regexPattern.Replace("{" + name + "}", "(?<"+ name +">.+?)");
+      }
+      return "^" + regexPattern + "$";
+    }
+
     public void ResolveRouting(HttpListenerContext context) {
       string url = context.Request.Url.ToString();
       string localPath = context.Request.Url.LocalPath.ToString();
@@ -323,58 +336,90 @@ namespace Elem {
         .Where(x => 
             (null != x.MethodInfo.GetCustomAttribute(typeof(Routing)))
             && Regex.IsMatch(localPath, 
-                ((Routing)x.MethodInfo.GetCustomAttribute(
-                        typeof(Routing))).Pattern))
+                ConvertParameterizedUriToRegexPattern(((Routing)x.MethodInfo.GetCustomAttribute(
+                        typeof(Routing))).Pattern)))
         .FirstOrDefault();
 
+      // Console.WriteLine(localPath);
+      // Console.WriteLine(ConvertParameterizedUriToRegexPattern("/item/list/{id}/{id2}"));
+      // var regex = new Regex(ConvertParameterizedUriToRegexPattern("/item/list/{id}/{id2}"));
+      // Console.WriteLine(regex.IsMatch(localPath));
+      // var mc = regex.Match(localPath);
+      // foreach(var g in mc.Groups.Keys) {
+      //   Console.WriteLine(g + "=" + mc.Groups[g]);
+      // }
+
       if(null != ctrlMethod) {
+        var attrRouting = (Routing)ctrlMethod.MethodInfo.GetCustomAttribute(typeof(Routing));
+
         // Call method when a route found
         try {
+          Match match = (new Regex(ConvertParameterizedUriToRegexPattern(attrRouting.Pattern))).Match(localPath);
+
           List<object> parameters = new List<object>();
 
           foreach(var p in ctrlMethod.MethodInfo.GetParameters()) {
+
             var request = context.Request;
             RequestBody attrRequestBody = (RequestBody)Attribute.GetCustomAttribute(p, typeof(RequestBody));
             RequestJson attrRequestJson = (RequestJson)Attribute.GetCustomAttribute(p, typeof(RequestJson));
+            UriParam attrUriParam = (UriParam)Attribute.GetCustomAttribute(p, typeof(UriParam));
 
             if(null != attrRequestBody) {
               using (var reader = new StreamReader(request.InputStream, request.ContentEncoding)) {
                 string body = reader.ReadToEnd();
                 parameters.Add(body);
               }
+              continue;
             }
             else if(null != attrRequestJson) {
               parameters.Add(JsonSerializer.Deserialize(request.InputStream, p.ParameterType, this.JsonSerializerOptions));
+              continue;
             }
             else if(p.ParameterType == typeof(HttpListenerContext)) {
               parameters.Add(context);
+              continue;
             } 
-            else if(p.ParameterType == typeof(Int32)) {
-              parameters.Add(Int32.Parse(queryParam.Get(p.Name)));
+
+            string paramValue = null;
+            if(null != attrUriParam) {
+              paramValue = match.Groups[p.Name].Value;
+            } else {
+              paramValue = queryParam.Get(p.Name);
+            }
+
+            if(p.ParameterType == typeof(Int32)) {
+              parameters.Add(Int32.Parse(paramValue));
+              continue;
             }
             else if(p.ParameterType == typeof(Int64)) {
-              parameters.Add(Int64.Parse(queryParam.Get(p.Name)));
+              parameters.Add(Int64.Parse(paramValue));
+              continue;
             }
             else if(p.ParameterType == typeof(Single)) {
-              parameters.Add(Single.Parse(queryParam.Get(p.Name)));
+              parameters.Add(Single.Parse(paramValue));
+              continue;
             }
             else if(p.ParameterType == typeof(Double)) {
-              parameters.Add(Double.Parse(queryParam.Get(p.Name)));
+              parameters.Add(Double.Parse(paramValue));
+              continue;
             }
             else if(p.ParameterType == typeof(Boolean)) {
-              parameters.Add(Boolean.Parse(queryParam.Get(p.Name)));
+              parameters.Add(Boolean.Parse(paramValue));
+              continue;
             }
             else if(p.ParameterType == typeof(Decimal)) {
-              parameters.Add(Decimal.Parse(queryParam.Get(p.Name)));
+              parameters.Add(Decimal.Parse(paramValue));
+              continue;
             }
             else if(p.ParameterType == typeof(string)) {
-              parameters.Add(queryParam.Get(p.Name));
+              parameters.Add(paramValue);
+              continue;
             }
-            else {
-              throw new Exception("Unsupported controller method parameter type."
-                  + " Class=" + ctrlMethod.MethodInfo.DeclaringType.Name + "." + ctrlMethod.MethodInfo.Name 
-                  + " ParameterType=" + p.ParameterType.Name);
-            }
+
+            throw new Exception("Unsupported controller method parameter type."
+                + " Class=" + ctrlMethod.MethodInfo.DeclaringType.Name + "." + ctrlMethod.MethodInfo.Name 
+                + " ParameterType=" + p.ParameterType.Name);
           }
 
           ctrlMethod.MethodInfo.Invoke(ctrlMethod.Ctrl, parameters.ToArray());

@@ -42,6 +42,14 @@ namespace SampleApp {
       // Console.WriteLine(ServerUtil.ToJson(item));
       ServerUtil.WriteResponseText(context, ServerUtil.ToJson(item));
     }
+
+    [Routing("/item/list/{id}/{code}/{name}")]
+    public void List2(HttpListenerContext context, [UriParam]int id, [UriParam]string code, [UriParam]string name) {
+      ServerUtil.WriteResponseText(context, "ok" + "\n");
+      ServerUtil.WriteResponseText(context, "id=" + id.ToString() + "\n");
+      ServerUtil.WriteResponseText(context, "code=" + code + "\n");
+      ServerUtil.WriteResponseText(context, "name=" + name + "\n");
+    }
   }
 
   [Controller]
