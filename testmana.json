@@ -1462,6 +1462,33 @@
           }
         }
       }
+    },
+    "menu": {
+      "$component": {
+        "form": {
+          "type": "#viewComponentType.form",
+          "layout": {
+            "x": 25,
+            "y": 50,
+            "width": 610,
+            "height": 400
+          },
+          "label": "TestReport - Menu"
+        },
+        "edit": {
+          "type": "#viewComponentType.button",
+          "layout": {
+            "x": 35,
+            "y": 90,
+            "width": 180,
+            "height": 60
+          },
+          "label": "TestReport",
+          "event": {
+            "click": "transitionTestReport()"
+          }
+        }
+      }
     }
   },
   "io": {

@@ -25,6 +25,5 @@ var app = Vue.createApp({
   computed: {
   }
 });
-app.config.isCustomElement = (tag) => { return tag === "contents"; };
 window.app = app.mount("#app");
 
