@@ -455,18 +455,14 @@ namespace Elem
                                              | BindingFlags.Instance
                                              | BindingFlags.DeclaredOnly),
                           (value, m) => new { Ctrl = value, MethodInfo = m })
+              .Where(x => (null != x.MethodInfo.GetCustomAttribute(typeof(Routing))))
               .Where(x =>
-                  (null != x.MethodInfo.GetCustomAttribute(typeof(Routing)))
-                  && (StringToRouteMethod(httpMethod)
-                    == ((Routing)x.MethodInfo.GetCustomAttribute(typeof(Routing))).Method))
-              //.Where(x =>
-              //    (null != x.MethodInfo.GetCustomAttribute(typeof(Routing)))
-              //    && Regex.IsMatch(localPath,
-              //        ConvertParameterizedUriToRegexPattern(((Routing)x.MethodInfo.GetCustomAttribute(
-              //                typeof(Routing))).Pattern)))
+                  (StringToRouteMethod(httpMethod)
+                    == ((Routing)x.MethodInfo.GetCustomAttribute(typeof(Routing))).Method)
+                  || (httpMethod == "OPTIONS" && ((null != x.MethodInfo.GetCustomAttribute(typeof(AllowCors)))
+                        || (null != x.Ctrl.GetType().GetCustomAttribute(typeof(AllowCors))))))
               .Where(x =>
-                  (null != x.MethodInfo.GetCustomAttribute(typeof(Routing)))
-                  && IsUrlMatch(((Routing)x.MethodInfo.GetCustomAttribute(typeof(Routing))).Pattern,
+                  IsUrlMatch(((Routing)x.MethodInfo.GetCustomAttribute(typeof(Routing))).Pattern,
                       localPath))
               .FirstOrDefault();
 
@@ -481,6 +477,39 @@ namespace Elem
 
             if (null != ctrlMethod)
             {
+                if (httpMethod == "OPTIONS" && ((null != ctrlMethod.MethodInfo.GetCustomAttribute(typeof(AllowCors)))
+                        || (null != ctrlMethod.Ctrl.GetType().GetCustomAttribute(typeof(AllowCors)))))
+                {
+                    bool hasAccessControlRequestMethod = false;
+                    bool hasOrigin = false;
+                    string[] keys = context.Request.Headers.AllKeys;
+                    for (var i = 0; i < keys.Length; i++)
+                    {
+                        string key = keys[i];
+
+                        if (key.ToUpper() == "Access-Control-Request-Method".ToUpper())
+                        {
+                            hasAccessControlRequestMethod = true;
+                        }
+
+                        if (key.ToUpper() == "Origin".ToUpper())
+                        {
+                            hasOrigin = true;
+                        }
+                    }
+
+
+                    ServerUtil.AddResponseHeader(context, "Access-Control-Allow-Origin", "*");
+                    ServerUtil.AddResponseHeader(context, "Access-Control-Allow-Headers", "Content-Type, Authorization");
+                    ServerUtil.AddResponseHeader(context, "Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+                    ServerUtil.AddResponseHeader(context, "Access-Control-Max-Age", "86400");
+
+                    context.Response.Close();
+
+                    return;
+                }
+
+
                 var attrRouting = (Routing)ctrlMethod.MethodInfo.GetCustomAttribute(typeof(Routing));
 
                 // Call method when a route found

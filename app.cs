@@ -57,6 +57,7 @@ namespace SampleApp {
     [Autowired]
     public IPersonService Svc { set; get; }
 
+    [AllowCors]
     [Routing("/person/list")]
     public void List(HttpListenerContext context) {
       ServerUtil.WriteResponseText(context, ServerUtil.ToJson(Svc.GetList()));
